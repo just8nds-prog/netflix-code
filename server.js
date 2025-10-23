@@ -68,9 +68,28 @@ app.get("/oauth2callback", async (req, res) => {
   try {
     const { tokens } = await oAuth2Client.getToken(req.query.code);
     oAuth2Client.setCredentials(tokens);
-    saveTokens(tokens);
-    res.send("✅ Đăng nhập Gmail thành công! Token đã lưu.");
+
+    // ✅ In token ra log để bạn copy từ Render Logs
+    console.log("====== TOKEN JSON START ======");
+    console.log(JSON.stringify(tokens, null, 2));
+    console.log("====== TOKEN JSON END ======");
+
+    // Nếu có thể lưu file (local /tmp), vẫn lưu lại
+    try {
+      const savePath = process.env.TOKENS_PATH || "/tmp/tokens.json";
+      fs.writeFileSync(savePath, JSON.stringify(tokens, null, 2), "utf8");
+      console.log("✅ Token đã lưu vào:", savePath);
+    } catch (e) {
+      console.warn("⚠️ Không thể lưu file token:", e.message);
+    }
+
+    res.send(`
+      ✅ Đăng nhập Gmail thành công!<br>
+      <b>Hãy mở phần Logs trên Render để copy nội dung token.</b><br>
+      Sau đó dán vào phần Environment Variable tên <code>TOKENS_JSON</code>.
+    `);
   } catch (err) {
+    console.error("❌ Lỗi OAuth:", err);
     res.status(500).send("OAuth lỗi: " + (err.message || err));
   }
 });
