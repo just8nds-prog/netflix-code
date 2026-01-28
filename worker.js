@@ -182,9 +182,8 @@ async function handleRequestLink(req, env) {
 
 // ===== GMAIL FETCH (SMART MODE) =====
 async function fetchLatestNetflixMail(accessToken) {
-  // Chỉ bắt mail từ info@account.netflix.com
   const q = encodeURIComponent(
-    'newer_than:60d from:info@account.netflix.com'
+    'newer_than:7d from:account.netflix.com subject:(Netflix)'
   );
 
   const listRes = await fetch(
@@ -207,16 +206,10 @@ async function fetchLatestNetflixMail(accessToken) {
     const subject = headers.find(h => h.name === "Subject")?.value || "";
     const date = headers.find(h => h.name === "Date")?.value || "";
 
+    // Decode body
     const parts = [];
     collectParts(msg.payload, parts);
     const all = parts.join(" ");
-
-    // Detect device (optional)
-    let device = "Không xác định";
-    const devMatch = all.match(
-      /(Samsung|iPhone|iPad|Android|Smart TV|TV|MacBook|Windows|PlayStation|Xbox)[^<\n]*/i
-    );
-    if (devMatch) device = devMatch[0].trim();
 
     // Chỉ bắt link dạng:
     // https://www.netflix.com/account/....
@@ -226,7 +219,7 @@ async function fetchLatestNetflixMail(accessToken) {
     const link = links[0] || null;
 
     if (link) {
-      return { subject, link, date, device };
+      return { subject, link, date };
     }
   }
 
