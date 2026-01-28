@@ -37,8 +37,6 @@ body{background:#0b0e13;color:#fff;font-family:system-ui;margin:0}
 input,button{padding:12px;border-radius:10px;border:none;background:#10161f;color:#fff;width:100%}
 button{background:#e50914;font-weight:600;cursor:pointer}
 .muted{color:#9aa4b2;font-size:14px}
-.badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#10161f;margin-top:6px}
-.timer{font-weight:bold;color:#ffcc00}
 </style>
 </head>
 <body>
@@ -51,27 +49,6 @@ button{background:#e50914;font-weight:600;cursor:pointer}
 </div>
 
 <script>
-let countdown;
-
-function startTimer(sentTime) {
-  const out = document.getElementById('timer');
-  clearInterval(countdown);
-
-  const expire = new Date(sentTime).getTime() + 15 * 60 * 1000;
-
-  countdown = setInterval(() => {
-    const diff = expire - Date.now();
-    if (diff <= 0) {
-      out.textContent = "Hết hạn";
-      clearInterval(countdown);
-      return;
-    }
-    const m = Math.floor(diff / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    out.textContent = m + ":" + String(s).padStart(2, "0");
-  }, 1000);
-}
-
 async function go(){
   const code = document.getElementById('code').value.trim();
   const out = document.getElementById('out');
@@ -91,16 +68,11 @@ async function go(){
     }
 
     const time = d.date ? new Date(d.date).toLocaleString("vi-VN") : "";
-    const device = d.device || "Không xác định";
 
     out.innerHTML = \`
       <div style="margin-top:10px">
         <div><b>Tiêu đề:</b> \${d.subject || ""}</div>
         <div style="margin-top:4px"><b>Thời gian gửi:</b> \${time}</div>
-        <div class="badge">Thiết bị: \${device}</div>
-        <div style="margin-top:6px">
-          Hết hạn sau: <span id="timer" class="timer">--:--</span>
-        </div>
         <div style="margin-top:10px">
           <form method="GET" action="\${d.link}" target="_top">
             <button>Lấy code Netflix</button>
@@ -108,9 +80,6 @@ async function go(){
         </div>
       </div>
     \`;
-
-    if (d.date) startTimer(d.date);
-
   } catch(e) {
     out.textContent = "Không thể kết nối máy chủ";
   }
@@ -182,75 +151,54 @@ async function handleRequestLink(req, env) {
 
 // ===== GMAIL FETCH =====
 async function fetchLatestNetflixMail(accessToken) {
+  // Match đúng mẫu mail bạn gửi:
+  // From: info@account.netflix.com
+  // Subject: Your Netflix temporary access code
   const q = encodeURIComponent(
-    'newer_than:7d from:account.netflix.com subject:(Netflix)'
+    'newer_than:30d from:account.netflix.com subject:"Your Netflix temporary access code"'
   );
 
   const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=5`,
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=1`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   const list = await listRes.json();
   if (!list.messages?.length) return null;
 
-  for (const m of list.messages) {
-    const msgRes = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+  const id = list.messages[0].id;
 
-    const msg = await msgRes.json();
-    const headers = msg.payload.headers || [];
+  const msgRes = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
 
-    const subject = headers.find(h => h.name === "Subject")?.value || "";
-    const date = headers.find(h => h.name === "Date")?.value || "";
+  const msg = await msgRes.json();
+  const headers = msg.payload.headers || [];
 
-    const parts = [];
-    collectParts(msg.payload, parts);
-    const all = parts.join(" ");
+  const subject = headers.find(h => h.name === "Subject")?.value || "";
+  const date = headers.find(h => h.name === "Date")?.value || "";
 
-    // Detect device (nếu có)
-    let device = "Không xác định";
-    const devMatch = all.match(
-      /(Samsung|iPhone|iPad|Android|Smart TV|TV|MacBook|Windows|PlayStation|Xbox)[^<\n]*/i
-    );
-    if (devMatch) device = devMatch[0].trim();
+  const parts = [];
+  collectParts(msg.payload, parts);
+  const all = parts.join(" ");
 
-    // Bắt link Netflix account
-    const links =
-      all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
+  // Link dạng:
+  // https://www.netflix.com/account/travel/verify?nftoken=...
+  const matches =
+    all.match(/https:\/\/www\.netflix\.com\/account\/travel\/verify[^\s"'<>]*/gi) || [];
 
-    const link = links[0] || null;
+  const link = matches[0] || null;
+  if (!link) return null;
 
-    if (link) {
-      return { subject, link, date, device };
-    }
-  }
-
-  return null;
+  return { subject, link, date };
 }
 
-// ===== BASE64URL DECODE =====
-function decodeBase64Url(str) {
-  if (!str) return "";
-  str = str.replace(/-/g, "+").replace(/_/g, "/");
-  while (str.length % 4) str += "=";
-  try {
-    return atob(str);
-  } catch {
-    return "";
-  }
-}
-
-// ===== BODY COLLECTOR =====
 function collectParts(p, out) {
   if (!p) return;
-  if (p.parts) {
-    p.parts.forEach(x => collectParts(x, out));
-  }
+  if (p.parts) p.parts.forEach(x => collectParts(x, out));
   if (p.body?.data) {
-    out.push(decodeBase64Url(p.body.data));
+    out.push(atob(p.body.data.replace(/-/g, "+").replace(/_/g, "/")));
   }
 }
 
