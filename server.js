@@ -1,4 +1,4 @@
-// server.js — Netflix Code (Cloudflare Workers FIXED version)
+// server.js — Netflix Code (FORM FIX for Cloudflare Workers / Pages)
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -272,24 +272,15 @@ document.getElementById('btn').onclick = async () => {
         <div><b>Tiêu đề:</b> \${data.subject || ''}</div>
         <div><b>Thời gian gửi:</b> \${dateVN}</div>
         <div style="margin-top:10px;text-align:center">
-          <button id="openLink"
-            style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;font-weight:bold">
-            Lấy code Netflix
-          </button>
+          <form method="GET" action="\${data.link}" target="_top">
+            <button
+              style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;font-weight:bold">
+              Lấy code Netflix
+            </button>
+          </form>
         </div>
       </div>
     \`;
-
-    // ===== HARD REDIRECT (bypass Cloudflare proxy) =====
-    setTimeout(() => {
-      const btn = document.getElementById('openLink');
-      if (btn) {
-        btn.onclick = () => {
-          window.location.href = data.link;
-        };
-      }
-    }, 0);
-
   } catch(e) {
     msg.textContent = 'Không thể kết nối máy chủ.';
   }
