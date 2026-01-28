@@ -113,11 +113,17 @@ async function fetchNetflixConfirmLinkWithMeta() {
   }
   const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-  const q = [
-    "newer_than:60d",
-    "(from:no-reply@netflix.com OR from:@mailer.netflix.com)",
-    "(subject:'Lưu ý quan trọng: Cách cập nhật Hộ gia đình Netflix')",
-  ].join(" ");
+const q = [
+  "newer_than:60d",
+  "(from:no-reply@netflix.com OR from:@mailer.netflix.com)",
+  "(",
+  "subject:(Netflix access code)",
+  "OR",
+  "subject:(temporary access)",
+  "OR",
+  "subject:(Hộ gia đình Netflix)",
+  ")",
+].join(" ");
 
   const list = await gmail.users.messages.list({
     userId: "me",
