@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2024-01-01"
 
 kv_namespaces = [
-  { binding = "TOKENS_KV", id = "YOUR_KV_ID" }
+  { binding = "TOKENS_KV", id = "93e96ba99efb45508f405affd1a3b8a4" }
 ]
 
 [vars]
