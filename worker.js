@@ -31,7 +31,7 @@ function renderUI() {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Lấy mã đăng nhập</title>
+<title>Lấy code Netflix</title>
 <style>
 :root {
   --bg:#0b0e13;
@@ -100,13 +100,13 @@ button:hover{opacity:.9}
 <body>
 <div class="card">
   <h2>Lấy code Netflix</h2>
-  <p class="muted">Vui lòng nhập mã được cấp</p>
+  <p class="muted">Nhập mã để lấy link Netflix</p>
 
   <div class="field">
-    <input id="code" placeholder="Nhập mã">
+    <input id="code" placeholder="Nhập mã đơn hàng">
   </div>
 
-  <button onclick="go()">Xác nhận</button>
+  <button onclick="go()">Lấy code</button>
   <div id="out"></div>
 </div>
 
@@ -198,19 +198,57 @@ async function handleRequestLink(req, env) {
     return json({ message: "Mã không hợp lệ" }, 403);
   }
 
-  const tokensRaw = await env.TOKENS_KV.get("gmail_tokens");
-  if (!tokensRaw) {
-    return json({ message: "Chưa auth Gmail. Vào /auth trước" }, 500);
+  const accessToken = await getValidAccessToken(env);
+  if (!accessToken) {
+    return json({ message: "Chưa kết nối Gmail. Vào /auth để đăng nhập lần đầu" }, 500);
   }
 
-  const tokens = JSON.parse(tokensRaw);
-  const msg = await fetchLatestNetflixMail(tokens.access_token);
-
+  const msg = await fetchLatestNetflixMail(accessToken);
   if (!msg) {
     return json({ message: "Không tìm thấy mail Netflix" }, 404);
   }
 
   return json(msg);
+}
+
+// ================= TOKEN AUTO REFRESH =================
+async function getValidAccessToken(env) {
+  const raw = await env.TOKENS_KV.get("gmail_tokens");
+  if (!raw) return null;
+
+  let tokens = JSON.parse(raw);
+
+  // Test token hiện tại
+  const test = await fetch(
+    "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+    { headers: { Authorization: `Bearer ${tokens.access_token}` } }
+  );
+
+  if (test.status !== 401) {
+    return tokens.access_token;
+  }
+
+  // Refresh token
+  if (!tokens.refresh_token) return null;
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      refresh_token: tokens.refresh_token,
+      grant_type: "refresh_token"
+    })
+  });
+
+  const newTokens = await res.json();
+  tokens.access_token = newTokens.access_token;
+  tokens.expires_in = newTokens.expires_in;
+
+  await env.TOKENS_KV.put("gmail_tokens", JSON.stringify(tokens));
+
+  return tokens.access_token;
 }
 
 // ================= GMAIL FETCH =================
