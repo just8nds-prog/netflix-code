@@ -1,4 +1,4 @@
-// server.js — Netflix Code (FORM FIX for Cloudflare Workers / Pages)
+// server.js — Netflix Code (ANTI-FONT / CDN SAFE VERSION)
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -42,6 +42,7 @@ const TOKENS_PATH =
     ? "/tmp/tokens.json"
     : path.join(__dirname, "tokens.json"));
 
+// ===== Token helpers =====
 function loadTokensIfAny() {
   try {
     if (process.env.TOKENS_JSON) {
@@ -116,7 +117,7 @@ const rawCodes = (process.env.CODE_LIST || "")
 
 const codeStore = new Map(rawCodes.map((c) => [c, true]));
 
-// ===== Gmail fetch (2 mail types supported) =====
+// ===== Gmail fetch (ANTI-FONT VERSION) =====
 async function fetchNetflixConfirmLinkWithMeta() {
   if (!loadTokensIfAny()) {
     throw new Error("Server chưa được admin đăng nhập Gmail. Vào /auth trước.");
@@ -180,13 +181,13 @@ async function fetchNetflixConfirmLinkWithMeta() {
 
   const allText = parts.join(" ");
 
-  // ===== MATCH BOTH NETFLIX LINK TYPES =====
+  // ===== STRICT NETFLIX CONFIRM LINK ONLY =====
   const linkPatterns = [
-    // Household / Primary location
-    /https?:\/\/[^\s"'<>]*netflix\.com[^\s"'<>]*update-primary-location[^\s"'<>]*/i,
+    // Household / primary location confirm
+    /https?:\/\/www\.netflix\.com\/account\/update-primary-location\?[^\s"'<>]*/i,
 
     // Temporary access / Get code
-    /https?:\/\/[^\s"'<>]*netflix\.com[^\s"'<>]*(temporary-access|travel|verify)[^\s"'<>]*/i,
+    /https?:\/\/www\.netflix\.com\/account\/(temporary-access|travel|verify)\?[^\s"'<>]*/i,
   ];
 
   let link = null;
@@ -197,6 +198,8 @@ async function fetchNetflixConfirmLinkWithMeta() {
       break;
     }
   }
+
+  console.log("🔗 NETFLIX LINK FOUND =", link || "NOT FOUND");
 
   return { subject, from, date, link };
 }
@@ -264,6 +267,11 @@ document.getElementById('btn').onclick = async () => {
       return;
     }
 
+    if (!data.link) {
+      msg.textContent = 'Không tìm thấy link Netflix trong email.';
+      return;
+    }
+
     msg.textContent = '';
     const dateVN = new Date(data.date).toLocaleString('vi-VN');
 
@@ -302,7 +310,7 @@ app.post("/request-link", async (req, res) => {
     if (!info.link)
       return res
         .status(404)
-        .json({ message: "Không tìm thấy link trong email gần nhất." });
+        .json({ message: "Không tìm thấy link Netflix trong email." });
 
     return res.json(info);
   } catch (err) {
@@ -315,6 +323,6 @@ app.post("/request-link", async (req, res) => {
 
 // ===== Start =====
 app.listen(PORT, () => {
-  console.log(\`🚀 Server chạy ở http://localhost:\${PORT}\`);
+  console.log(`🚀 Server chạy ở http://localhost:${PORT}`);
   console.log("→ Admin vào /auth (1 lần) để lưu token Gmail trước khi khách dùng.");
 });
