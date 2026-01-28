@@ -99,14 +99,14 @@ button:hover{opacity:.9}
 </head>
 <body>
 <div class="card">
-  <h2>Lấy code Netflix</h2>
-  <p class="muted">Nhập mã để lấy link Netflix</p>
+  <h2>Netflix: Hoàn Bùi</h2>
+  <p class="muted">Vui lòng nhập mã được cấp</p>
 
   <div class="field">
-    <input id="code" placeholder="Nhập mã đơn hàng">
+    <input id="code" placeholder="Nhập mã">
   </div>
 
-  <button onclick="go()">Lấy code</button>
+  <button onclick="go()">Xác nhận</button>
   <div id="out"></div>
 </div>
 
