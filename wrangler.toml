@@ -1,0 +1,13 @@
+name = "netflix-code"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+kv_namespaces = [
+  { binding = "TOKENS_KV", id = "YOUR_KV_ID" }
+]
+
+[vars]
+CODE_LIST = "1111,2222,3333"
+GOOGLE_CLIENT_ID = "xxx"
+GOOGLE_CLIENT_SECRET = "xxx"
+GOOGLE_REDIRECT_URI = "https://netflix-code.just8n-ds.workers.dev/oauth2callback"
