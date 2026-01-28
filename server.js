@@ -1,4 +1,4 @@
-// server.js — Netflix Code (2-mail compatible + open link fix)
+// server.js — Netflix Code (Cloudflare Workers FIXED version)
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -182,7 +182,7 @@ async function fetchNetflixConfirmLinkWithMeta() {
 
   // ===== MATCH BOTH NETFLIX LINK TYPES =====
   const linkPatterns = [
-    // Hộ gia đình Netflix
+    // Household / Primary location
     /https?:\/\/[^\s"'<>]*netflix\.com[^\s"'<>]*update-primary-location[^\s"'<>]*/i,
 
     // Temporary access / Get code
@@ -272,16 +272,24 @@ document.getElementById('btn').onclick = async () => {
         <div><b>Tiêu đề:</b> \${data.subject || ''}</div>
         <div><b>Thời gian gửi:</b> \${dateVN}</div>
         <div style="margin-top:10px;text-align:center">
-          <a id="openLink"
-             href="\${data.link}"
-             target="_blank"
-             rel="noopener noreferrer"
-             style="display:block;text-align:center;text-decoration:none;width:100%;padding:12px;background:#e50914;color:#fff;border-radius:8px;font-weight:bold">
+          <button id="openLink"
+            style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;font-weight:bold">
             Lấy code Netflix
-          </a>
+          </button>
         </div>
       </div>
     \`;
+
+    // ===== HARD REDIRECT (bypass Cloudflare proxy) =====
+    setTimeout(() => {
+      const btn = document.getElementById('openLink');
+      if (btn) {
+        btn.onclick = () => {
+          window.location.href = data.link;
+        };
+      }
+    }, 0);
+
   } catch(e) {
     msg.textContent = 'Không thể kết nối máy chủ.';
   }
@@ -316,6 +324,6 @@ app.post("/request-link", async (req, res) => {
 
 // ===== Start =====
 app.listen(PORT, () => {
-  console.log(`🚀 Server chạy ở http://localhost:${PORT}`);
+  console.log(\`🚀 Server chạy ở http://localhost:\${PORT}\`);
   console.log("→ Admin vào /auth (1 lần) để lưu token Gmail trước khi khách dùng.");
 });
