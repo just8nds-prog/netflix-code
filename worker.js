@@ -153,10 +153,10 @@ async function handleRequestLink(req, env) {
 async function fetchLatestNetflixMail(accessToken) {
   // Match đúng mẫu mail bạn gửi:
   // From: info@account.netflix.com
-  // Subject: Your Netflix temporary access code
+  // Subject: Netflix
   const q = encodeURIComponent(
-    'newer_than:30d from:account.netflix.com subject:"Your Netflix temporary access code"'
-  );
+  'newer_than:30d from:account.netflix.com subject:(Netflix)'
+);
 
   const listRes = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=1`,
@@ -184,9 +184,9 @@ async function fetchLatestNetflixMail(accessToken) {
   const all = parts.join(" ");
 
   // Link dạng:
-  // https://www.netflix.com/account/travel/verify?nftoken=...
+  // https://www.netflix.com/account/...
   const matches =
-    all.match(/https:\/\/www\.netflix\.com\/account\/travel\/verify[^\s"'<>]*/gi) || [];
+  all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
 
   const link = matches[0] || null;
   if (!link) return null;
