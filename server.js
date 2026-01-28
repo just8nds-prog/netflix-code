@@ -1,4 +1,4 @@
-// server.js — Netflix Code (2-mail compatible)
+// server.js — Netflix Code (2-mail compatible + open link fix)
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -272,16 +272,16 @@ document.getElementById('btn').onclick = async () => {
         <div><b>Tiêu đề:</b> \${data.subject || ''}</div>
         <div><b>Thời gian gửi:</b> \${dateVN}</div>
         <div style="margin-top:10px;text-align:center">
-          <button id="openLink" style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;font-weight:bold">
+          <a id="openLink"
+             href="\${data.link}"
+             target="_blank"
+             rel="noopener noreferrer"
+             style="display:block;text-align:center;text-decoration:none;width:100%;padding:12px;background:#e50914;color:#fff;border-radius:8px;font-weight:bold">
             Lấy code Netflix
-          </button>
+          </a>
         </div>
       </div>
     \`;
-
-    document.getElementById('openLink').onclick = () => {
-      window.open(data.link, '_blank', 'noopener,noreferrer');
-    };
   } catch(e) {
     msg.textContent = 'Không thể kết nối máy chủ.';
   }
