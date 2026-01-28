@@ -41,11 +41,11 @@ button{background:#e50914;font-weight:600;cursor:pointer}
 </head>
 <body>
 <div class="card">
-<h2>Lấy code Netflix</h2>
-<p class="muted">Nhập mã để lấy link Netflix</p>
-<input id="code" placeholder="Nhập mã">
-<button onclick="go()">Lấy code</button>
-<div id="out" class="muted"></div>
+  <h2>Lấy code Netflix</h2>
+  <p class="muted">Nhập mã để lấy link Netflix</p>
+  <input id="code" placeholder="Nhập mã">
+  <button onclick="go()">Lấy code</button>
+  <div id="out" class="muted"></div>
 </div>
 
 <script>
@@ -54,28 +54,35 @@ async function go(){
   const out = document.getElementById('out');
   out.textContent = "Đang kiểm tra...";
 
-  const r = await fetch('/request-link', {
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body: JSON.stringify({ code })
-  });
+  try {
+    const r = await fetch('/request-link', {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ code })
+    });
 
-  const d = await r.json();
-  if(!r.ok){
-    out.textContent = d.message;
-    return;
-  }
+    const d = await r.json();
+    if(!r.ok){
+      out.textContent = d.message || "Lỗi không xác định";
+      return;
+    }
 
-  out.innerHTML = \`
-    <div style="margin-top:10px">
-      <div><b>\${d.subject}</b></div>
-      <div style="margin-top:8px">
-        <form method="GET" action="\${d.link}" target="_top">
-          <button>Mở Netflix</button>
-        </form>
+    const time = d.date ? new Date(d.date).toLocaleString("vi-VN") : "";
+
+    out.innerHTML = \`
+      <div style="margin-top:10px">
+        <div><b>Tiêu đề:</b> \${d.subject || ""}</div>
+        <div style="margin-top:4px"><b>Thời gian gửi:</b> \${time}</div>
+        <div style="margin-top:10px">
+          <form method="GET" action="\${d.link}" target="_top">
+            <button>Lấy code Netflix</button>
+          </form>
+        </div>
       </div>
-    </div>
-  \`;
+    \`;
+  } catch(e) {
+    out.textContent = "Không thể kết nối máy chủ";
+  }
 }
 </script>
 </body>
@@ -144,9 +151,12 @@ async function handleRequestLink(req, env) {
 
 // ===== GMAIL FETCH =====
 async function fetchLatestNetflixMail(accessToken) {
+  // Match đúng mẫu mail bạn gửi:
+  // From: info@account.netflix.com
+  // Subject: Your Netflix temporary access code
   const q = encodeURIComponent(
-  'newer_than:60d from:account.netflix.com subject:"Your Netflix temporary access code"'
-);
+    'newer_than:30d from:account.netflix.com subject:"Your Netflix temporary access code"'
+  );
 
   const listRes = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=1`,
@@ -165,20 +175,23 @@ async function fetchLatestNetflixMail(accessToken) {
 
   const msg = await msgRes.json();
   const headers = msg.payload.headers || [];
+
   const subject = headers.find(h => h.name === "Subject")?.value || "";
+  const date = headers.find(h => h.name === "Date")?.value || "";
 
   const parts = [];
   collectParts(msg.payload, parts);
   const all = parts.join(" ");
 
+  // Link dạng:
+  // https://www.netflix.com/account/travel/verify?nftoken=...
   const matches =
-    all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]+/gi) || [];
+    all.match(/https:\/\/www\.netflix\.com\/account\/travel\/verify[^\s"'<>]*/gi) || [];
 
-  const link = matches.find(u =>
-    /travel|verify|temporary-access|update-primary-location/i.test(u)
-  );
+  const link = matches[0] || null;
+  if (!link) return null;
 
-  return { subject, link };
+  return { subject, link, date };
 }
 
 function collectParts(p, out) {
