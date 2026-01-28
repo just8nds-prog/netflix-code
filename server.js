@@ -220,13 +220,20 @@ app.get("/", (req, res) => {
       if (!r.ok) { msg.textContent = data.message || 'Lỗi'; return; }
       msg.textContent = '';
       const dateVN = new Date(data.date).toLocaleString('vi-VN');
-      result.innerHTML = '<div style="background:#071022;padding:14px;border-radius:8px;">'
-        + '<div><b>Tiêu đề:</b> ' + (data.subject||'') + '</div>'
-        + '<div><b>Thời gian gửi:</b> ' + dateVN + '</div>'
-        + '<div style="margin-top:10px;text-align:center">'
-        + '<a href="' + data.link + '" target="_blank" rel="noreferrer">'
-        + '<button style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold">Lấy code Netflix</button>'
-        + '</a></div></div>';
+      result.innerHTML =
+  '<div style="background:#071022;padding:14px;border-radius:8px;">'
++ '<div><b>Tiêu đề:</b> ' + (data.subject||'') + '</div>'
++ '<div><b>Thời gian gửi:</b> ' + dateVN + '</div>'
++ '<div style="margin-top:10px;text-align:center">'
++ '<button id="openLink" '
++ 'style="width:100%;padding:12px;background:#e50914;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold">'
++ 'Lấy code Netflix'
++ '</button>'
++ '</div></div>';
+
+document.getElementById('openLink').onclick = () => {
+  window.open(data.link, '_blank', 'noopener,noreferrer');
+};
     } catch(e) {
       msg.textContent = 'Không thể kết nối máy chủ.';
     }
