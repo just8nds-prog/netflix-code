@@ -184,7 +184,7 @@ async function handleRequestLink(req, env) {
 async function fetchLatestNetflixMail(accessToken) {
   // Bắt cả temporary access + update household / location
   const q = encodeURIComponent(
-    'newer_than:30d from:account.netflix.com subject:(Netflix)'
+    'newer_than:30d from:info@account.netflix.com subject:(Netflix)'
   );
 
   const listRes = await fetch(
