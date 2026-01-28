@@ -180,7 +180,7 @@ async function handleRequestLink(req, env) {
   return json(msg);
 }
 
-// ===== GMAIL FETCH (SMART MODE) =====
+// ===== GMAIL FETCH =====
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
     'newer_than:7d from:account.netflix.com subject:(Netflix)'
@@ -206,24 +206,52 @@ async function fetchLatestNetflixMail(accessToken) {
     const subject = headers.find(h => h.name === "Subject")?.value || "";
     const date = headers.find(h => h.name === "Date")?.value || "";
 
-    // Decode body
     const parts = [];
     collectParts(msg.payload, parts);
     const all = parts.join(" ");
 
-    // Chỉ bắt link dạng:
-    // https://www.netflix.com/account/....
+    // Detect device (nếu có)
+    let device = "Không xác định";
+    const devMatch = all.match(
+      /(Samsung|iPhone|iPad|Android|Smart TV|TV|MacBook|Windows|PlayStation|Xbox)[^<\n]*/i
+    );
+    if (devMatch) device = devMatch[0].trim();
+
+    // Bắt link Netflix account
     const links =
       all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
 
     const link = links[0] || null;
 
     if (link) {
-      return { subject, link, date };
+      return { subject, link, date, device };
     }
   }
 
   return null;
+}
+
+// ===== BASE64URL DECODE =====
+function decodeBase64Url(str) {
+  if (!str) return "";
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+  try {
+    return atob(str);
+  } catch {
+    return "";
+  }
+}
+
+// ===== BODY COLLECTOR =====
+function collectParts(p, out) {
+  if (!p) return;
+  if (p.parts) {
+    p.parts.forEach(x => collectParts(x, out));
+  }
+  if (p.body?.data) {
+    out.push(decodeBase64Url(p.body.data));
+  }
 }
 
 // ===== UTILS =====
