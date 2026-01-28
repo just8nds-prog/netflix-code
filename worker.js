@@ -24,7 +24,7 @@ export default {
   }
 };
 
-// ===== UI =====
+// ================= UI =================
 function renderUI() {
   return `<!doctype html>
 <html lang="vi">
@@ -34,113 +34,66 @@ function renderUI() {
 <title>Lấy code Netflix</title>
 <style>
 :root {
-  --bg: #0b0e13;
-  --card: #0f141b;
-  --input: #10161f;
-  --muted: #9aa4b2;
-  --red: #e50914;
+  --bg:#0b0e13;
+  --card:#0f141b;
+  --input:#10161f;
+  --muted:#9aa4b2;
+  --red:#e50914;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  background: var(--bg);
-  color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:#fff;
+  font-family:system-ui;
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
 }
-
-.card {
-  width: 100%;
-  max-width: 420px;
-  background: var(--card);
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--card);
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 20px 50px rgba(0,0,0,.4);
 }
-
-h2 {
-  margin: 0 0 8px;
-  text-align: center;
+h2{text-align:center;margin:0 0 8px}
+.muted{
+  color:var(--muted);
+  font-size:14px;
+  text-align:center;
+  margin-bottom:16px;
 }
-
-.muted {
-  color: var(--muted);
-  font-size: 14px;
-  text-align: center;
-  margin-bottom: 16px;
+.field{margin-bottom:14px}
+input{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:var(--input);
+  color:#fff;
+  font-size:16px;
 }
-
-.field {
-  margin-bottom: 14px;
+button{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:var(--red);
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
 }
-
-input {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  background: var(--input);
-  color: #fff;
-  font-size: 16px;
-}
-
-input::placeholder {
-  color: #6b7280;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  border: none;
-  background: var(--red);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.05s ease, opacity 0.2s ease;
-}
-
-button:hover { opacity: 0.9; }
-button:active { transform: scale(0.98); }
-
-#out {
-  margin-top: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.result {
-  background: #0b1018;
-  border-radius: 12px;
-  padding: 14px;
-}
-
-.result b {
-  color: #fff;
-}
-
-/* Mobile tweaks */
-@media (max-width: 480px) {
-  .card {
-    padding: 20px;
-    border-radius: 14px;
-  }
-
-  h2 {
-    font-size: 20px;
-  }
-
-  input, button {
-    font-size: 15px;
-    padding: 13px;
-  }
+button:hover{opacity:.9}
+#out{margin-top:16px;font-size:14px}
+.result{
+  background:#0b1018;
+  border-radius:12px;
+  padding:14px;
 }
 </style>
 </head>
@@ -154,7 +107,6 @@ button:active { transform: scale(0.98); }
   </div>
 
   <button onclick="go()">Lấy code</button>
-
   <div id="out"></div>
 </div>
 
@@ -199,7 +151,7 @@ async function go(){
 </html>`;
 }
 
-// ===== AUTH =====
+// ================= AUTH =================
 function handleAuth(env) {
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -237,7 +189,7 @@ async function handleOAuthCallback(url, env) {
   return new Response("✅ Gmail connected! You can close this tab.");
 }
 
-// ===== API =====
+// ================= API =================
 async function handleRequestLink(req, env) {
   const { code } = await req.json();
   const list = (env.CODE_LIST || "").split(",");
@@ -252,22 +204,24 @@ async function handleRequestLink(req, env) {
   }
 
   const tokens = JSON.parse(tokensRaw);
-
   const msg = await fetchLatestNetflixMail(tokens.access_token);
-  if (!msg) return json({ message: "Không tìm thấy mail Netflix" }, 404);
+
+  if (!msg) {
+    return json({ message: "Không tìm thấy mail Netflix" }, 404);
+  }
 
   return json(msg);
 }
 
-// ===== GMAIL FETCH =====
+// ================= GMAIL FETCH =================
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
-    'newer_than:30d from:account.netflix.com subject:(Netflix)'
+    'newer_than:7d from:account.netflix.com subject:(Netflix)'
   );
 
   const listRes = await fetch(
-    \`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=\${q}&maxResults=5\`,
-    { headers: { Authorization: \`Bearer \${accessToken}\` } }
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=5`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   const list = await listRes.json();
@@ -275,8 +229,8 @@ async function fetchLatestNetflixMail(accessToken) {
 
   for (const m of list.messages) {
     const msgRes = await fetch(
-      \`https://gmail.googleapis.com/gmail/v1/users/me/messages/\${m.id}?format=full\`,
-      { headers: { Authorization: \`Bearer \${accessToken}\` } }
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     const msg = await msgRes.json();
@@ -289,7 +243,6 @@ async function fetchLatestNetflixMail(accessToken) {
     collectParts(msg.payload, parts);
     const all = parts.join(" ");
 
-    // Bắt link Netflix account
     const links =
       all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
 
@@ -303,7 +256,7 @@ async function fetchLatestNetflixMail(accessToken) {
   return null;
 }
 
-// ===== BASE64URL DECODE =====
+// ================= HELPERS =================
 function decodeBase64Url(str) {
   if (!str) return "";
   str = str.replace(/-/g, "+").replace(/_/g, "/");
@@ -315,18 +268,12 @@ function decodeBase64Url(str) {
   }
 }
 
-// ===== BODY COLLECTOR =====
 function collectParts(p, out) {
   if (!p) return;
-  if (p.parts) {
-    p.parts.forEach(x => collectParts(x, out));
-  }
-  if (p.body?.data) {
-    out.push(decodeBase64Url(p.body.data));
-  }
+  if (p.parts) p.parts.forEach(x => collectParts(x, out));
+  if (p.body?.data) out.push(decodeBase64Url(p.body.data));
 }
 
-// ===== UTILS =====
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
