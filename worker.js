@@ -30,48 +30,135 @@ function renderUI() {
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Lấy code Netflix</title>
 <style>
-body{background:#0b0e13;color:#fff;font-family:system-ui;margin:0}
-.card{max-width:480px;margin:6vh auto;padding:22px;border-radius:14px;background:#0f141b}
-input,button{padding:12px;border-radius:10px;border:none;background:#10161f;color:#fff;width:100%}
-button{background:#e50914;font-weight:600;cursor:pointer}
-.muted{color:#9aa4b2;font-size:14px}
-.badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#10161f;margin-top:6px}
-.timer{font-weight:bold;color:#ffcc00}
+:root {
+  --bg: #0b0e13;
+  --card: #0f141b;
+  --input: #10161f;
+  --muted: #9aa4b2;
+  --red: #e50914;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+h2 {
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--input);
+  color: #fff;
+  font-size: 16px;
+}
+
+input::placeholder {
+  color: #6b7280;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.05s ease, opacity 0.2s ease;
+}
+
+button:hover { opacity: 0.9; }
+button:active { transform: scale(0.98); }
+
+#out {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.result {
+  background: #0b1018;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.result b {
+  color: #fff;
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  input, button {
+    font-size: 15px;
+    padding: 13px;
+  }
+}
 </style>
 </head>
 <body>
 <div class="card">
   <h2>Lấy code Netflix</h2>
   <p class="muted">Nhập mã để lấy link Netflix</p>
-  <input id="code" placeholder="Nhập mã">
+
+  <div class="field">
+    <input id="code" placeholder="Nhập mã đơn hàng">
+  </div>
+
   <button onclick="go()">Lấy code</button>
-  <div id="out" class="muted"></div>
+
+  <div id="out"></div>
 </div>
 
 <script>
-let countdown;
-
-function startTimer(sentTime) {
-  const out = document.getElementById('timer');
-  clearInterval(countdown);
-
-  const expire = new Date(sentTime).getTime() + 15 * 60 * 1000;
-
-  countdown = setInterval(() => {
-    const diff = expire - Date.now();
-    if (diff <= 0) {
-      out.textContent = "Hết hạn";
-      clearInterval(countdown);
-      return;
-    }
-    const m = Math.floor(diff / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    out.textContent = m + ":" + String(s).padStart(2, "0");
-  }, 1000);
-}
-
 async function go(){
   const code = document.getElementById('code').value.trim();
   const out = document.getElementById('out');
@@ -91,26 +178,18 @@ async function go(){
     }
 
     const time = d.date ? new Date(d.date).toLocaleString("vi-VN") : "";
-    const device = d.device || "Không xác định";
 
     out.innerHTML = \`
-      <div style="margin-top:10px">
+      <div class="result">
         <div><b>Tiêu đề:</b> \${d.subject || ""}</div>
-        <div style="margin-top:4px"><b>Thời gian gửi:</b> \${time}</div>
-        <div class="badge">Thiết bị: \${device}</div>
-        <div style="margin-top:6px">
-          Hết hạn sau: <span id="timer" class="timer">--:--</span>
-        </div>
-        <div style="margin-top:10px">
+        <div style="margin-top:6px"><b>Thời gian gửi:</b> \${time}</div>
+        <div style="margin-top:14px">
           <form method="GET" action="\${d.link}" target="_top">
             <button>Lấy code Netflix</button>
           </form>
         </div>
       </div>
     \`;
-
-    if (d.date) startTimer(d.date);
-
   } catch(e) {
     out.textContent = "Không thể kết nối máy chủ";
   }
@@ -183,12 +262,12 @@ async function handleRequestLink(req, env) {
 // ===== GMAIL FETCH =====
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
-    'newer_than:7d from:account.netflix.com subject:(Netflix)'
+    'newer_than:30d from:account.netflix.com subject:(Netflix)'
   );
 
   const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=5`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    \`https://gmail.googleapis.com/gmail/v1/users/me/messages?q=\${q}&maxResults=5\`,
+    { headers: { Authorization: \`Bearer \${accessToken}\` } }
   );
 
   const list = await listRes.json();
@@ -196,8 +275,8 @@ async function fetchLatestNetflixMail(accessToken) {
 
   for (const m of list.messages) {
     const msgRes = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      \`https://gmail.googleapis.com/gmail/v1/users/me/messages/\${m.id}?format=full\`,
+      { headers: { Authorization: \`Bearer \${accessToken}\` } }
     );
 
     const msg = await msgRes.json();
@@ -210,13 +289,6 @@ async function fetchLatestNetflixMail(accessToken) {
     collectParts(msg.payload, parts);
     const all = parts.join(" ");
 
-    // Detect device (nếu có)
-    let device = "Không xác định";
-    const devMatch = all.match(
-      /(Samsung|iPhone|iPad|Android|Smart TV|TV|MacBook|Windows|PlayStation|Xbox)[^<\n]*/i
-    );
-    if (devMatch) device = devMatch[0].trim();
-
     // Bắt link Netflix account
     const links =
       all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
@@ -224,7 +296,7 @@ async function fetchLatestNetflixMail(accessToken) {
     const link = links[0] || null;
 
     if (link) {
-      return { subject, link, date, device };
+      return { subject, link, date };
     }
   }
 
