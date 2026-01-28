@@ -31,7 +31,7 @@ function renderUI() {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Lấy code Netflix</title>
+<title>Lấy mã đăng nhập</title>
 <style>
 :root {
   --bg:#0b0e13;
@@ -100,13 +100,13 @@ button:hover{opacity:.9}
 <body>
 <div class="card">
   <h2>Lấy code Netflix</h2>
-  <p class="muted">Nhập mã để lấy link Netflix</p>
+  <p class="muted">Vui lòng nhập mã được cấp</p>
 
   <div class="field">
-    <input id="code" placeholder="Nhập mã đơn hàng">
+    <input id="code" placeholder="Nhập mã">
   </div>
 
-  <button onclick="go()">Lấy code</button>
+  <button onclick="go()">Xác nhận</button>
   <div id="out"></div>
 </div>
 
