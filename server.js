@@ -1,4 +1,4 @@
-// server.js — Netflix Code (ANTI-FONT / CDN SAFE VERSION)
+// server.js — Netflix Code FINAL (ANTI-FONT + CLOUDFLARE SAFE)
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
@@ -117,7 +117,7 @@ const rawCodes = (process.env.CODE_LIST || "")
 
 const codeStore = new Map(rawCodes.map((c) => [c, true]));
 
-// ===== Gmail fetch (ANTI-FONT VERSION) =====
+// ===== Gmail fetch (FINAL SAFE LINK EXTRACTOR) =====
 async function fetchNetflixConfirmLinkWithMeta() {
   if (!loadTokensIfAny()) {
     throw new Error("Server chưa được admin đăng nhập Gmail. Vào /auth trước.");
@@ -181,23 +181,19 @@ async function fetchNetflixConfirmLinkWithMeta() {
 
   const allText = parts.join(" ");
 
-  // ===== STRICT NETFLIX CONFIRM LINK ONLY =====
-  const linkPatterns = [
-    // Household / primary location confirm
-    /https?:\/\/www\.netflix\.com\/account\/update-primary-location\?[^\s"'<>]*/i,
+  // ===== FINAL SAFE MATCH =====
+  // 1) Only allow https://www.netflix.com/account/...
+  const candidates =
+    allText.match(
+      /https:\/\/www\.netflix\.com\/account\/[^\s"'<>]+/gi
+    ) || [];
 
-    // Temporary access / Get code
-    /https?:\/\/www\.netflix\.com\/account\/(temporary-access|travel|verify)\?[^\s"'<>]*/i,
-  ];
+  // 2) Prefer real confirm links
+  const preferred = candidates.find((u) =>
+    /\/(travel|verify|temporary-access|update-primary-location)/i.test(u)
+  );
 
-  let link = null;
-  for (const re of linkPatterns) {
-    const m = allText.match(re);
-    if (m) {
-      link = m[0];
-      break;
-    }
-  }
+  const link = preferred || candidates[0] || null;
 
   console.log("🔗 NETFLIX LINK FOUND =", link || "NOT FOUND");
 
