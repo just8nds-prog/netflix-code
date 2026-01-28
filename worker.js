@@ -145,8 +145,8 @@ async function handleRequestLink(req, env) {
 // ===== GMAIL FETCH =====
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
-    'newer_than:7d from:(no-reply@netflix.com OR @mailer.netflix.com)'
-  );
+  'newer_than:60d from:account.netflix.com subject:"Your Netflix temporary access code"'
+);
 
   const listRes = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=1`,
