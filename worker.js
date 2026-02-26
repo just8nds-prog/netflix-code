@@ -254,7 +254,7 @@ async function getValidAccessToken(env) {
 // ================= GMAIL FETCH =================
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
-    'newer_than:60d from:account.netflix.com subject:(Netflix)'
+    'newer_than:30d from:account.netflix.com subject:(Netflix)'
   );
 
   const listRes = await fetch(
