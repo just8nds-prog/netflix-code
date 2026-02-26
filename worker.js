@@ -131,17 +131,34 @@ async function go(){
 
     const time = d.date ? new Date(d.date).toLocaleString("vi-VN") : "";
 
-    out.innerHTML = \`
-      <div class="result">
-        <div><b>Tiêu đề:</b> \${d.subject || ""}</div>
-        <div style="margin-top:6px"><b>Thời gian gửi:</b> \${time}</div>
-        <div style="margin-top:14px">
-          <form method="GET" action="\${d.link}" target="_top">
-            <button>Lấy code Netflix</button>
-          </form>
+    out.innerHTML = `
+  <div class="result">
+    <div><b>Tiêu đề:</b> ${d.subject || ""}</div>
+    <div style="margin-top:6px"><b>Thời gian gửi:</b> ${time}</div>
+
+    ${d.otp ? `
+      <div style="margin-top:16px">
+        <div style="
+          font-size:28px;
+          font-weight:700;
+          letter-spacing:8px;
+          text-align:center;
+          margin:10px 0;
+        ">
+          ${d.otp}
         </div>
       </div>
-    \`;
+    ` : ""}
+
+    ${d.link ? `
+      <div style="margin-top:14px">
+        <form method="GET" action="${d.link}" target="_top">
+          <button>Lấy link Netflix</button>
+        </form>
+      </div>
+    ` : ""}
+  </div>
+`;
   } catch(e) {
     out.textContent = "Không thể kết nối máy chủ";
   }
