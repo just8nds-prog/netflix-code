@@ -131,34 +131,28 @@ async function go(){
 
     const time = d.date ? new Date(d.date).toLocaleString("vi-VN") : "";
 
-    out.innerHTML = `
-  <div class="result">
-    <div><b>Tiêu đề:</b> ${d.subject || ""}</div>
-    <div style="margin-top:6px"><b>Thời gian gửi:</b> ${time}</div>
+    let html = '<div class="result">';
+    html += '<div><b>Tiêu đề:</b> ' + (d.subject || '') + '</div>';
+    html += '<div style="margin-top:6px"><b>Thời gian gửi:</b> ' + time + '</div>';
 
-    ${d.otp ? `
-      <div style="margin-top:16px">
-        <div style="
-          font-size:28px;
-          font-weight:700;
-          letter-spacing:8px;
-          text-align:center;
-          margin:10px 0;
-        ">
-          ${d.otp}
-        </div>
-      </div>
-    ` : ""}
+    if (d.otp) {
+      html += '<div style="margin-top:16px">';
+      html += '<div style="font-size:28px;font-weight:700;letter-spacing:8px;text-align:center;margin:10px 0;">';
+      html += d.otp;
+      html += '</div></div>';
+    }
 
-    ${d.link ? `
-      <div style="margin-top:14px">
-        <form method="GET" action="${d.link}" target="_top">
-          <button>Lấy link Netflix</button>
-        </form>
-      </div>
-    ` : ""}
-  </div>
-`;
+    if (d.link) {
+      html += '<div style="margin-top:14px">';
+      html += '<form method="GET" action="' + d.link + '" target="_top">';
+      html += '<button>Lấy link Netflix</button>';
+      html += '</form></div>';
+    }
+
+    html += '</div>';
+
+    out.innerHTML = html;
+
   } catch(e) {
     out.textContent = "Không thể kết nối máy chủ";
   }
