@@ -254,7 +254,7 @@ async function getValidAccessToken(env) {
 // ================= GMAIL FETCH =================
 async function fetchLatestNetflixMail(accessToken) {
   const q = encodeURIComponent(
-    'newer_than:30d from:account.netflix.com subject:(Netflix)'
+    'from:account.netflix.com newer_than:30d (subject:"your sign-in code" OR subject:"Your verification code" OR subject:"Netflix")'
   );
 
   const listRes = await fetch(
@@ -281,13 +281,34 @@ async function fetchLatestNetflixMail(accessToken) {
     collectParts(msg.payload, parts);
     const all = parts.join(" ");
 
+    // ================= GIỮ NGUYÊN QUÉT LINK CŨ =================
     const links =
       all.match(/https:\/\/www\.netflix\.com\/account\/[^\s"'<>]*/gi) || [];
 
     const link = links[0] || null;
 
-    if (link) {
-      return { subject, link, date };
+    // ================= THÊM QUÉT OTP =================
+    let otp = null;
+
+    // Regex thông minh theo nội dung Netflix
+    const otpMatch = all.match(
+      /(sign in to Netflix.*?(\d{4}))|((verification code|this code).*?(\d{6}))/is
+    );
+
+    if (otpMatch) {
+      otp = otpMatch[2] || otpMatch[5] || null;
+    }
+
+    // Fallback nếu không match theo context
+    if (!otp) {
+      const match6 = all.match(/\b\d{6}\b/);
+      const match4 = all.match(/\b\d{4}\b/);
+      otp = match6?.[0] || match4?.[0] || null;
+    }
+
+    // ================= TRẢ KẾT QUẢ =================
+    if (link || otp) {
+      return { subject, link, otp, date };
     }
   }
 
