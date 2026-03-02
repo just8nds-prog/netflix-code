@@ -20,6 +20,12 @@ export default {
       return handleOAuthCallback(url, env);
     }
 
+// 🔎 DEBUG TOKEN
+    if (url.pathname === "/debug") {
+      const raw = await env.TOKENS_KV.get("gmail_tokens");
+      return new Response(raw || "NO TOKEN");
+    }
+
     return new Response("Not found", { status: 404 });
   }
 };
